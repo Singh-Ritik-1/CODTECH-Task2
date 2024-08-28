@@ -1,0 +1,388 @@
+import java.util.*;
+import java.text.SimpleDateFormat;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+// Main Class
+public class HospitalManagementSystem {
+    // Data storage (In a real application, this would be a database)
+    private static List<Patient> patients = new ArrayList<>();
+    private static List<Staff> staff = new ArrayList<>();
+    private static List<Appointment> appointments = new ArrayList<>();
+    private static List<MedicalSupply> inventory = new ArrayList<>();
+    private static List<Billing> billings = new ArrayList<>();
+    private static SecretKey secretKey;
+
+    // Role-Based Access Control
+    private static Map<String, String> roles = new HashMap<>(); // username -> role
+    private static Map<String, String> passwords = new HashMap<>(); // username -> encrypted password
+
+    public static void main(String[] args) {
+        try {
+            // Initialize Secret Key for Encryption
+            secretKey = KeyGenerator.getInstance("AES").generateKey();
+
+            // Sample Data
+            roles.put("admin", "ADMIN");
+            roles.put("doctor", "DOCTOR");
+            roles.put("nurse", "NURSE");
+
+            passwords.put("admin", encrypt("admin123"));
+            passwords.put("doctor", encrypt("doctor123"));
+            passwords.put("nurse", encrypt("nurse123"));
+
+            // Sample Medical Supplies
+            inventory.add(new MedicalSupply("Syringe", 100));
+            inventory.add(new MedicalSupply("Bandage", 200));
+
+            // Example of RBAC and System Usage
+            Scanner sc = new Scanner(System.in);
+            System.out.println("Login as (admin/doctor/nurse): ");
+            String username = sc.nextLine();
+            System.out.println("Enter password: ");
+            String password = sc.nextLine();
+
+            if (authenticate(username, password)) {
+                String role = roles.get(username);
+                System.out.println("Welcome, " + role);
+                if (role.equals("ADMIN")) {
+                    // Admin operations
+                    adminOperations(sc);
+                } else if (role.equals("DOCTOR")) {
+                    // Doctor operations
+                    doctorOperations(sc);
+                } else if (role.equals("NURSE")) {
+                    // Nurse operations
+                    nurseOperations(sc);
+                }
+            } else {
+                System.out.println("Authentication failed!");
+            }
+            sc.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean authenticate(String username, String password) throws Exception {
+        return passwords.containsKey(username) && passwords.get(username).equals(encrypt(password));
+    }
+
+    private static String encrypt(String data) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        byte[] encryptedBytes = cipher.doFinal(data.getBytes());
+        return Base64.getEncoder().encodeToString(encryptedBytes);
+    }
+
+    private static String decrypt(String encryptedData) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        byte[] decodedBytes = Base64.getDecoder().decode(encryptedData);
+        byte[] decryptedBytes = cipher.doFinal(decodedBytes);
+        return new String(decryptedBytes);
+    }
+
+    // Admin operations
+    private static void adminOperations(Scanner sc) {
+        while (true) {
+            System.out.println("Admin operations:");
+            System.out.println("1. Register Patient");
+            System.out.println("2. Manage Staff");
+            System.out.println("3. Manage Inventory");
+            System.out.println("4. View All Patients");
+            System.out.println("5. Logout");
+            int choice = sc.nextInt();
+            sc.nextLine(); // consume newline
+
+            switch (choice) {
+                case 1:
+                    registerPatient(sc);
+                    break;
+                case 2:
+                    manageStaff(sc);
+                    break;
+                case 3:
+                    manageInventory(sc);
+                    break;
+                case 4:
+                    viewAllPatients();
+                    break;
+                case 5:
+                    return;
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+
+    // Register a new patient
+    private static void registerPatient(Scanner sc) {
+        System.out.println("Enter patient name:");
+        String name = sc.nextLine();
+        System.out.println("Enter patient age:");
+        int age = sc.nextInt();
+        sc.nextLine(); // consume newline
+        System.out.println("Enter medical history:");
+        String medicalHistory = sc.nextLine();
+
+        Patient newPatient = new Patient(name, age, medicalHistory);
+        patients.add(newPatient);
+        System.out.println("Patient registered successfully.");
+    }
+
+    // Manage staff
+    private static void manageStaff(Scanner sc) {
+        System.out.println("Manage Staff:");
+        System.out.println("1. Add Staff");
+        System.out.println("2. View Staff");
+        int choice = sc.nextInt();
+        sc.nextLine(); // consume newline
+
+        switch (choice) {
+            case 1:
+                addStaff(sc);
+                break;
+            case 2:
+                viewStaff();
+                break;
+            default:
+                System.out.println("Invalid option. Try again.");
+        }
+    }
+
+    private static void addStaff(Scanner sc) {
+        System.out.println("Enter staff name:");
+        String name = sc.nextLine();
+        System.out.println("Enter staff role:");
+        String role = sc.nextLine();
+
+        Staff newStaff = new Staff(name, role);
+        staff.add(newStaff);
+        System.out.println("Staff added successfully.");
+    }
+
+    private static void viewStaff() {
+        System.out.println("Staff List:");
+        for (Staff s : staff) {
+            System.out.println("Name: " + s.getName() + ", Role: " + s.getRole());
+        }
+    }
+
+    // Manage inventory
+    private static void manageInventory(Scanner sc) {
+        System.out.println("Inventory Management:");
+        System.out.println("1. View Inventory");
+        System.out.println("2. Add Medical Supply");
+        int choice = sc.nextInt();
+        sc.nextLine(); // consume newline
+
+        switch (choice) {
+            case 1:
+                viewInventory();
+                break;
+            case 2:
+                addMedicalSupply(sc);
+                break;
+            default:
+                System.out.println("Invalid option. Try again.");
+        }
+    }
+
+    private static void viewInventory() {
+        System.out.println("Inventory List:");
+        for (MedicalSupply ms : inventory) {
+            System.out.println("Name: " + ms.getName() + ", Quantity: " + ms.getQuantity());
+        }
+    }
+
+    private static void addMedicalSupply(Scanner sc) {
+        System.out.println("Enter medical supply name:");
+        String name = sc.nextLine();
+        System.out.println("Enter quantity:");
+        int quantity = sc.nextInt();
+        sc.nextLine(); // consume newline
+
+        MedicalSupply newSupply = new MedicalSupply(name, quantity);
+        inventory.add(newSupply);
+        System.out.println("Medical supply added successfully.");
+    }
+
+    // View all patients
+    private static void viewAllPatients() {
+        System.out.println("Patient List:");
+        for (Patient p : patients) {
+            System.out.println("Name: " + p.getName() + ", Age: " + p.getAge() + ", Medical History: " + p.getMedicalHistory());
+        }
+    }
+
+    // Doctor operations
+    private static void doctorOperations(Scanner sc) {
+        while (true) {
+            System.out.println("Doctor operations:");
+            System.out.println("1. View Patient Records");
+            System.out.println("2. Schedule Appointment");
+            System.out.println("3. Logout");
+            int choice = sc.nextInt();
+            sc.nextLine(); // consume newline
+
+            switch (choice) {
+                case 1:
+                    viewAllPatients();
+                    break;
+                case 2:
+                    scheduleAppointment(sc);
+                    break;
+                case 3:
+                    return;
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+
+    private static void scheduleAppointment(Scanner sc) {
+        System.out.println("Enter patient name:");
+        String name = sc.nextLine();
+        Patient patient = findPatientByName(name);
+        
+        if (patient == null) {
+            System.out.println("Patient not found.");
+            return;
+        }
+        
+        System.out.println("Enter appointment date (dd-MM-yyyy):");
+        String dateStr = sc.nextLine();
+        try {
+            Date date = new SimpleDateFormat("dd-MM-yyyy").parse(dateStr);
+            Appointment appointment = new Appointment(patient, date);
+            appointments.add(appointment);
+            System.out.println("Appointment scheduled successfully.");
+        } catch (Exception e) {
+            System.out.println("Invalid date format.");
+        }
+    }
+
+    // Helper method to find a patient by name
+    private static Patient findPatientByName(String name) {
+        for (Patient p : patients) {
+            if (p.getName().equalsIgnoreCase(name)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    // Nurse operations
+    private static void nurseOperations(Scanner sc) {
+        while (true) {
+            System.out.println("Nurse operations:");
+            System.out.println("1. View Inventory");
+            System.out.println("2. Assist in Patient Management");
+            System.out.println("3. Logout");
+            int choice = sc.nextInt();
+            sc.nextLine(); // consume newline
+
+            switch (choice) {
+                case 1:
+                    viewInventory();
+                    break;
+                case 2:
+                    assistPatientManagement(sc);
+                    break;
+                case 3:
+                    return;
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+
+    private static void assistPatientManagement(Scanner sc) {
+        System.out.println("Patient Management Assistance:");
+        System.out.println("1. View All Patients");
+        System.out.println("2. View Patient Details by Name");
+        int choice = sc.nextInt();
+        sc.nextLine(); // consume newline
+
+        switch (choice) {
+            case 1:
+                viewAllPatients();
+                break;
+            case 2:
+                System.out.println("Enter patient name:");
+                String name = sc.nextLine();
+                Patient patient = findPatientByName(name);
+                if (patient != null) {
+                    System.out.println("Name: " + patient.getName() + ", Age: " + patient.getAge() + ", Medical History: " + patient.getMedicalHistory());
+                } else {
+                    System.out.println("Patient not found.");
+                }
+                break;
+            default:
+                System.out.println("Invalid option. Try again.");
+        }
+    }
+
+    // Placeholder classes for demonstration
+    static class Patient {
+        private String name;
+        private int age;
+        private String medicalHistory;
+
+        public Patient(String name, int age, String medicalHistory) {
+            this.name = name;
+            this.age = age;
+            this.medicalHistory = medicalHistory;
+        }
+
+        public String getName() { return name; }
+        public int getAge() { return age; }
+        public String getMedicalHistory() { return medicalHistory; }
+    }
+
+    static class Staff {
+        private String name;
+        private String role;
+
+        public Staff(String name, String role) {
+            this.name = name;
+            this.role = role;
+        }
+
+        public String getName() { return name; }
+        public String getRole() { return role; }
+    }
+
+    static class Appointment {
+        private Patient patient;
+        private Date date;
+
+        public Appointment(Patient patient, Date date) {
+            this.patient = patient;
+            this.date = date;
+        }
+
+        public Patient getPatient() { return patient; }
+        public Date getDate() { return date; }
+    }
+
+    static class MedicalSupply {
+        private String name;
+        private int quantity;
+
+        public MedicalSupply(String name, int quantity) {
+            this.name = name;
+            this.quantity = quantity;
+        }
+
+        public String getName() { return name; }
+        public int getQuantity() { return quantity; }
+    }
+
+    static class Billing {
+        // Placeholder for Billing details
+    }
+}
