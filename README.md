@@ -50,3 +50,11 @@ Mentor: Muzammil Ahmed
 - Scanner class for reading user input.
 
 This project serves as a foundational tool for managing hospital operations, demonstrating basic concepts of encryption, role-based access, and system management in a Java environment.
+output :
+![Screenshot 2024-09-26 232034](https://github.com/user-attachments/assets/4246c3eb-f736-42aa-8f63-3642ecab2a07)
+![Screenshot 2024-09-26 232120](https://github.com/user-attachments/assets/f71f9de4-bfbe-48f1-aa34-37eb72b37667)
+![Screenshot 2024-09-26 232204](https://github.com/user-attachments/assets/6f96893c-4695-482c-a3cb-a2f416001f2d)
+![image](https://github.com/user-attachments/assets/992b78f8-2392-4c60-9c8b-5d363e2d8208)
+
+
+
